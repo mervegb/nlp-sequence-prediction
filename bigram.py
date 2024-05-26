@@ -87,12 +87,17 @@ class BigramLanguageModel(nn.Module):
         # initialize embedding layer
         self.token_embedding_table = nn.Embedding(vocab_size, n_embed)
 
+        self.position_embedding_table = nn.Embedding(block_size, n_embed)
+
        # linear layer that transforms embeddings back to the vocabulary size
         self.lm_head = nn.Linear(n_embed, vocab_size)
 
     def forward(self, idx, targets=None):
+        B, T = idx.shape
         tok_emb = self.token_embedding_table(idx)  # (B,T,C)
-        logits = self.lm_head(tok_emb)  # (B,T, vocab_size)
+        pos_emb = self.position_embedding_table(torch.arange(T, device=device))
+        x = tok_emb + pos_emb
+        logits = self.lm_head(x)  # (B,T, vocab_size)
 
         if targets is None:
             loss = None
